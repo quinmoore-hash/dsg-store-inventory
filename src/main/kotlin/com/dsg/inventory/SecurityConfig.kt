@@ -4,33 +4,37 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
+import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig : WebSecurityConfigurerAdapter() {
+class SecurityConfig {
 
-    override fun configure(http: HttpSecurity) {
+    @Bean
+    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
-            .authorizeRequests()
-            .antMatchers("/css/**").permitAll()
-            .anyRequest().authenticated()
-            .and()
-            .formLogin()
-            .loginPage("/login")
-            .defaultSuccessUrl("/inventory", true)
-            .permitAll()
-            .and()
-            .logout().permitAll()
+            .authorizeHttpRequests { authorize ->
+                authorize
+                    .requestMatchers("/css/**").permitAll()
+                    .anyRequest().authenticated()
+            }
+            .formLogin { form ->
+                form
+                    .loginPage("/login")
+                    .defaultSuccessUrl("/inventory", true)
+                    .permitAll()
+            }
+            .logout { it.permitAll() }
+        return http.build()
     }
 
     @Bean
-    override fun userDetailsService(): UserDetailsService {
+    fun userDetailsService(): UserDetailsService {
         val user = User.builder()
             .username("admin")
             .password(passwordEncoder().encode("dsgops2024"))
